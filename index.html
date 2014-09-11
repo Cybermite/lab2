@@ -5,11 +5,32 @@
   <font size=3><div id="what"></div></font>
   <font size=3><div id="inventory"></div></font>
   <font size=3><div id="next"></div></font>
+  <font size=3><div id="cookieField"></div></font>
   <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
   <script>
     $(function() {
       $("#where").html("booting...");
       where = "strong-hall";
+      var cookieDate;
+      
+      function getCookie(cookieName){
+      	var name = cookieName + "=";
+      	var cookie = document.cookie;
+      	while(cookie.charAt(0) == ' '){
+      		cookie = cookie.substring(1);
+      	}
+      	if(cookie.indexOf(name) != -1){
+      		return cookie.substring(name.length, cookie.length);
+      	}
+      }
+      
+      function checkCookie(){
+      	cookieDate = getCookie("EECS581");
+      	if(cookieDate == undefined){
+      		cookieDate = new Date().getTime();
+      		document.cookie = "EECS581=" + cookieDate;
+      	}
+      }
 
       function refresh() {
         $.get("/" + where, function (data) {
@@ -26,7 +47,7 @@
                 button.text("Take " + item);
                 (function(button,where,item) {
                   button.click(function() {
-                    $.ajax("/" + where + "/" + item,
+                    $.ajax("/" + where + "/" + item + "/" + cookieDate,
                         { success : refresh
                         , type : "DELETE"
                         }
@@ -54,7 +75,7 @@
 
 
         });
-        $.get("/inventory",function (data) {
+        $.get("/inventory/" + cookieDate,function (data) {
           if (data == undefined || data.length == 0) {
              $("#inventory").html("You are not carrying anything");
           } else {
@@ -66,7 +87,7 @@
                button.text("Drop " + item);
                 (function(button,where,item) {
                   button.click(function() {
-                    $.ajax("/" + where + "/" + item,
+                    $.ajax("/" + where + "/" + item + "/" + cookieDate,
                         { success : refresh
                         , type : "PUT"
                         }
@@ -80,6 +101,7 @@
         });
       }
 
+      checkCookie();
       refresh();
 
     });

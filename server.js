@@ -7,12 +7,6 @@ app.get('/', function(req, res){
 });
 
 app.get('/:id', function(req, res){
-	if (req.params.id == "inventory") {
-	    res.set({'Content-Type': 'application/json'});
-	    res.status(200);
-	    res.send(inventory);
-	    return;
-	}
 	for (var i in campus) {
 		if (req.params.id == campus[i].id) {
 		    res.set({'Content-Type': 'application/json'});
@@ -25,12 +19,22 @@ app.get('/:id', function(req, res){
 	res.send("not found, sorry");
 });
 
+app.get('/inventory/:userid', function(req, res){
+	if(inventory[req.params.userid] == undefined){
+		createUser(req.params.userid);
+	}
+        res.set({'Content-Type': 'application/json'});
+    	res.status(200);
+    	res.send(inventory[req.params.userid]);
+    	return;
+});
+
 app.get('/images/:name', function(req, res){
 	res.status(200);
 	res.sendFile(__dirname + "/" + req.params.name);
 });
 
-app.delete('/:id/:item', function(req, res){
+app.delete('/:id/:item/:userid', function(req, res){
 	for (var i in campus) {
 		if (req.params.id == campus[i].id) {
 		    res.set({'Content-Type': 'application/json'});
@@ -40,8 +44,8 @@ app.delete('/:id/:item', function(req, res){
 		    }
 		    if (ix >= 0) {
 		       res.status(200);
-			inventory.push(campus[i].what[ix]); // stash
-		        res.send(inventory);
+			inventory[req.params.userid].push(campus[i].what[ix]); // stash
+		        res.send(inventory[req.params.userid]);
 			campus[i].what.splice(ix, 1); // room no longer has this
 			return;
 		    }
@@ -54,13 +58,13 @@ app.delete('/:id/:item', function(req, res){
 	res.send("location not found");
 });
 
-app.put('/:id/:item', function(req, res){
+app.put('/:id/:item/:userid', function(req, res){
 	for (var i in campus) {
 		if (req.params.id == campus[i].id) {
 				// Check you have this
-				var ix = inventory.indexOf(req.params.item)
+				var ix = inventory[req.params.userid].indexOf(req.params.item)
 				if (ix >= 0) {
-					dropbox(ix,campus[i]);
+					dropbox(ix,campus[i], req.params.userid);
 					res.set({'Content-Type': 'application/json'});
 					res.status(200);
 					res.send([]);
@@ -77,9 +81,9 @@ app.put('/:id/:item', function(req, res){
 
 app.listen(3000);
 
-var dropbox = function(ix,room) {
-	var item = inventory[ix];
-	inventory.splice(ix, 1);	 // remove from inventory
+var dropbox = function(ix,room, userid) {
+	var item = inventory[userid][ix];
+	inventory[userid].splice(ix, 1);	 // remove from inventory
 	if (room.id == 'allen-fieldhouse' && item == "basketball") {
 		room.text	+= " Someone found the ball so there is a game going on!"
 		return;
@@ -90,7 +94,11 @@ var dropbox = function(ix,room) {
 	room.what.push(item);
 }
 
-var inventory = ["laptop"];
+var inventory = [];
+
+function createUser(userid){
+	inventory[userid] = ["laptop"];
+}
 
 var campus =
     [ { "id": "lied-center",
