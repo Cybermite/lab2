@@ -33,7 +33,7 @@
       }
 
       function refresh() {
-        $.get("/" + where + "/" + cookieDate, function (response) {
+        $.get("/" + where, function (response) {
            var data = response.loc;
            $("#where").html(data.text);
            $("#picture").attr("src","images/" + data.where);

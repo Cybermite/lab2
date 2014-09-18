@@ -6,7 +6,7 @@ app.get('/', function(req, res){
 	res.sendFile(__dirname + "/index.html");
 });
 
-app.get('/:id/:userid', function(req, res){
+app.get('/:id', function(req, res){
     var response = {"loc":[], "user":[]};
 	for (var i in campus) {
 		if (req.params.id == campus[i].id) {
