@@ -22,18 +22,16 @@ app.get('/images/:name', function(req, res){
 });
 
 app.get('/:id/:userid', function(req, res){
-    var response = {"loc":[], "users":[]};
-	for (var i in campus) {
-		if (req.params.id == campus[i].id) {
+    var response = {};
+	for (var roomid in campus) {
+		if (req.params.id == campus[roomid].id) {
 		    res.set({'Content-Type': 'application/json'});
 		    res.status(200);
-		    response.loc = campus[i];
-		    //response.push = {"loc":campus[i]};
+		    response.loc = campus[roomid];
 		    if(users[req.params.userid] == undefined){
 		        createUser(req.params.userid);
 		    }
-		    response.users = getOtherUsersAt(i, req.params.userid);
-		    //response.push = {"userid":[getOtherUsersAt(i, req.params.userid)]};
+		    response.users = getOtherUsersAt(roomid, req.params.userid);
 		    res.send(response);
 		    
 		    return;
@@ -106,13 +104,13 @@ var dropbox = function(ix,room, userid) {
 var users = [];
 
 function createUser(userid){
-	users[userid] = { "inventory": ["laptop"], "where": "strong-hall"};
+	users[userid] = { "inventory": ["laptop"], "roomid": "4"};
 }
 
-function getOtherUsersAt(room, userid) {
+function getOtherUsersAt(roomid, userid) {
     var otherUsers = [];
     for (var i in users) {
-		if (users[i].where == room && i != userid) {
+		if (users[i].roomid == roomid && i != userid) {
 		    otherUsers.push(i);
 		}
 	}
