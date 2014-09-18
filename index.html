@@ -33,11 +33,10 @@
       }
 
       function refresh() {
-        $.get("/" + where, function (response) {
+        $.get("/" + where + "/" + cookieDate, function (response) {
            var data = response.loc;
            $("#where").html(data.text);
            $("#picture").attr("src","images/" + data.where);
-           $("#cookieField").html(data.where);
            if (data.what == undefined || data.what.length == 0) {
               $("#what").html("");
            } else {

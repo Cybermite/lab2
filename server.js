@@ -6,8 +6,23 @@ app.get('/', function(req, res){
 	res.sendFile(__dirname + "/index.html");
 });
 
-app.get('/:id', function(req, res){
-    var response = {"loc":[], "user":[]};
+app.get('/inventory/:userid', function(req, res){
+	if(users[req.params.userid] == undefined){
+		createUser(req.params.userid);
+	}
+        res.set({'Content-Type': 'application/json'});
+    	res.status(200);
+    	res.send(users[req.params.userid].inventory);
+    	return;
+});
+
+app.get('/images/:name', function(req, res){
+	res.status(200);
+	res.sendFile(__dirname + "/" + req.params.name);
+});
+
+app.get('/:id/:userid', function(req, res){
+    var response = {"loc":[], "users":[]};
 	for (var i in campus) {
 		if (req.params.id == campus[i].id) {
 		    res.set({'Content-Type': 'application/json'});
@@ -26,21 +41,6 @@ app.get('/:id', function(req, res){
 	}
 	res.status(404);
 	res.send("not found, sorry");
-});
-
-app.get('/inventory/:userid', function(req, res){
-	if(users[req.params.userid] == undefined){
-		createUser(req.params.userid);
-	}
-        res.set({'Content-Type': 'application/json'});
-    	res.status(200);
-    	res.send(users[req.params.userid].inventory);
-    	return;
-});
-
-app.get('/images/:name', function(req, res){
-	res.status(200);
-	res.sendFile(__dirname + "/" + req.params.name);
 });
 
 app.delete('/:id/:item/:userid', function(req, res){
