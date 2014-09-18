@@ -33,9 +33,11 @@
       }
 
       function refresh() {
-        $.get("/" + where, function (data) {
+        $.get("/" + where + "/" + cookieDate, function (response) {
+           var data = response.loc;
            $("#where").html(data.text);
            $("#picture").attr("src","images/" + data.where);
+           $("#cookieField").html(data.where);
            if (data.what == undefined || data.what.length == 0) {
               $("#what").html("");
            } else {
@@ -61,7 +63,6 @@
 
           $("#next").html("");
           for(var i in data.next) {
-            $("#next").append(i);
             button = $("<button/>");
             button.text("Go " + i);
             (function(button,dest) {
@@ -79,7 +80,7 @@
           if (data == undefined || data.length == 0) {
              $("#inventory").html("You are not carrying anything");
           } else {
-             $("#inventory").html("You are carrying : ");
+             $("#inventory").html("You are carrying: ");
              for(var i in data) {
                var item = data[i];
                $("#inventory").append(item);

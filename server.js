@@ -6,12 +6,21 @@ app.get('/', function(req, res){
 	res.sendFile(__dirname + "/index.html");
 });
 
-app.get('/:id', function(req, res){
+app.get('/:id/:userid', function(req, res){
+    var response = {"loc":[], "user":[]};
 	for (var i in campus) {
 		if (req.params.id == campus[i].id) {
 		    res.set({'Content-Type': 'application/json'});
 		    res.status(200);
-		    res.send(campus[i]);
+		    response.loc = campus[i];
+		    //response.push = {"loc":campus[i]};
+		    if(users[req.params.userid] == undefined){
+		        createUser(req.params.userid);
+		    }
+		    response.users = getOtherUsersAt(i, req.params.userid);
+		    //response.push = {"userid":[getOtherUsersAt(i, req.params.userid)]};
+		    res.send(response);
+		    
 		    return;
 		}
 	}
@@ -20,12 +29,12 @@ app.get('/:id', function(req, res){
 });
 
 app.get('/inventory/:userid', function(req, res){
-	if(inventory[req.params.userid] == undefined){
+	if(users[req.params.userid] == undefined){
 		createUser(req.params.userid);
 	}
         res.set({'Content-Type': 'application/json'});
     	res.status(200);
-    	res.send(inventory[req.params.userid]);
+    	res.send(users[req.params.userid].inventory);
     	return;
 });
 
@@ -44,8 +53,8 @@ app.delete('/:id/:item/:userid', function(req, res){
 		    }
 		    if (ix >= 0) {
 		       res.status(200);
-			inventory[req.params.userid].push(campus[i].what[ix]); // stash
-		        res.send(inventory[req.params.userid]);
+			users[req.params.userid].inventory.push(campus[i].what[ix]); // stash
+		        res.send(users[req.params.userid].inventory);
 			campus[i].what.splice(ix, 1); // room no longer has this
 			return;
 		    }
@@ -62,7 +71,7 @@ app.put('/:id/:item/:userid', function(req, res){
 	for (var i in campus) {
 		if (req.params.id == campus[i].id) {
 				// Check you have this
-				var ix = inventory[req.params.userid].indexOf(req.params.item)
+				var ix = users[req.params.userid].inventory.indexOf(req.params.item)
 				if (ix >= 0) {
 					dropbox(ix,campus[i], req.params.userid);
 					res.set({'Content-Type': 'application/json'});
@@ -76,14 +85,14 @@ app.put('/:id/:item/:userid', function(req, res){
 		}
 	}
 	res.status(404);
-	res.send("location not found");
+	res.send("location not founsd");
 });
 
 app.listen(3000);
 
 var dropbox = function(ix,room, userid) {
-	var item = inventory[userid][ix];
-	inventory[userid].splice(ix, 1);	 // remove from inventory
+	var item = users[userid].inventory[ix];
+	users[userid].inventory.splice(ix, 1);	 // remove from inventory
 	if (room.id == 'allen-fieldhouse' && item == "basketball") {
 		room.text	+= " Someone found the ball so there is a game going on!"
 		return;
@@ -94,11 +103,21 @@ var dropbox = function(ix,room, userid) {
 	room.what.push(item);
 }
 
-var inventory = [];
+var users = [];
 
 function createUser(userid){
-	inventory[userid] = ["laptop"];
+	users[userid] = { "inventory": ["laptop"], "where": "strong-hall"};
 }
+
+function getOtherUsersAt(room, userid) {
+    var otherUsers = [];
+    for (var i in users) {
+		if (users[i].where == room && i != userid) {
+		    otherUsers.push(i);
+		}
+	}
+	return otherUsers;
+}   
 
 var campus =
     [ { "id": "lied-center",
