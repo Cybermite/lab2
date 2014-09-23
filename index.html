@@ -6,6 +6,7 @@
   <font size=3><div id="inventory"></div></font>
   <font size=3><div id="next"></div></font>
   <font size=3><div id="cookieField"></div></font>
+  <font size=3><div id="otherUsers"></div></font>
   <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
   <script>
     $(function() {
@@ -72,7 +73,15 @@
             })(button,data.next[i]);
             $("#next").append(button);
           }
-
+          
+          $("#otherUsers").html("");
+          for(var i in response.users) {
+            div = $("<div></div>");
+            button = $("<button/>");
+            button.text("Trade: " + response.users[i]);
+            div.append(button);
+            $("#otherUsers").append(div);
+          }
 
         });
         $.get("/inventory/" + cookieDate,function (data) {
