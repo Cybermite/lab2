@@ -29,6 +29,10 @@
           cookieDate = getCookie("EECS581");
           if(cookieDate == undefined){
               cookieDate = new Date().getTime();
+              /*
+              var expireDate = new Date().setTime(cookieDate.getTime() +
+                      365*24*60*60*1000);
+              var expires = "expires=" + expireDate.toUTCString();*/
               document.cookie = "EECS581=" + cookieDate;
           }
       }

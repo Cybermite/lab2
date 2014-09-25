@@ -1,9 +1,46 @@
 var express = require('express');
 var app = express();
 
+var fs = require('fs');
+var userFile = __dirname + '/test.json';
+var campusFile = __dirname + '/campus.json';
+
+//function readFile(){
+fs.readFile(userFile, 'utf8', function (err, data) {
+    if (err) {
+        console.log('Error: ' + err);
+        return;
+    }
+
+    users = JSON.parse(data);
+});
+
+fs.readFile(campusFile, 'utf8', function (err, data) {
+    if (err) {
+        console.log('Error: ' + err);
+        return;
+    }
+
+    campus = JSON.parse(data);
+});
+
+
+function writeToFile(file, data){
+    var stream = fs.createWriteStream(file);
+    stream.once('open', function(fd) {
+      //  for(var i in users){
+        //    console.log(users[i]);
+       // }
+        //console.log(JSON.stringify(users));
+        stream.write(JSON.stringify(data));
+        stream.end();
+    });
+}
+
 app.get('/', function(req, res){
     res.status(200);
     res.sendFile(__dirname + "/index.html");
+ //   readFile();
 });
 
 app.get('/inventory/:userid', function(req, res){
@@ -13,6 +50,8 @@ app.get('/inventory/:userid', function(req, res){
     res.set({'Content-Type': 'application/json'});
     res.status(200);
     res.send(users[req.params.userid].inventory);
+    writeToFile(userFile, users);
+    writeToFile(campusFile, campus);
     return;
 });
 
@@ -118,7 +157,7 @@ var dropbox = function(ix,room, userid) {
     room.what.push(item);
 }
 
-var users = [];
+var users = {};
 
 function createUser(userid){
     users[userid] = { "userid": userid, "inventory": ["laptop"], "roomid": "4"};
