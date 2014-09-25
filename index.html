@@ -78,10 +78,29 @@
           for(var i in response.users) {
             div = $("<div></div>");
             button = $("<button/>");
-            button.text("Trade: " + response.users[i]);
+            button.text("User: " + response.users[i]);
             div.append(button);
+            $.get("/inventory/" + response.users[i], function (usersItems) {
+             if(usersItems != undefined && usersItems.length != 0){
+             for(var j in usersItems) {
+                button2 = $("<button/>");
+                button2.text("Steal: " + usersItems[j]);
+                (function(button, myid, otherid, item) {
+                 button.click(function() {
+                    $.ajax("/" + where + "/" + item + "/" + otherid + "/" + myid,
+                            { success : refresh
+                            , type : "DELETE"
+                            }
+                        );
+                    refresh();
+                    });
+                 })(button2, cookieDate, response.users[i], usersItems[j]);
+                div.append(button2);
+                }
+                }});
+            
             $("#otherUsers").append(div);
-          }
+          } 
 
         });
         $.get("/inventory/" + cookieDate,function (data) {

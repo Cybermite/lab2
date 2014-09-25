@@ -31,6 +31,8 @@ app.get('/:id/:userid', function(req, res){
             if(users[req.params.userid] == undefined){
                 createUser(req.params.userid);
             }
+
+            // Update this user's location (room)
             users[req.params.userid].roomid = roomid;
             response.users = getOtherUsersAt(roomid, req.params.userid);
             res.send(response);
@@ -66,6 +68,20 @@ app.delete('/:id/:item/:userid', function(req, res){
     res.send("location not found");
 });
 
+app.delete('/:id/:item/:fromUserid/:toUserid', function(req, res){
+    if(users[req.params.fromUserid] == undefined || users[req.params.toUserid] == undefined){
+        res.status(404);
+        res.send("User couldn't be found");
+        return;
+    }
+    else { 
+        var itemid = users[req.params.fromUserid].inventory.indexOf(req.params.item);
+        users[req.params.fromUserid].inventory.splice(itemid, 1);
+        users[req.params.toUserid].inventory.push(req.params.item);
+        res.send([]);
+    }
+});
+
 app.put('/:id/:item/:userid', function(req, res){
     for (var i in campus) {
         if (req.params.id == campus[i].id) {
@@ -84,7 +100,7 @@ app.put('/:id/:item/:userid', function(req, res){
         }
     }
     res.status(404);
-    res.send("location not founsd");
+    res.send("location not found");
 });
 
 app.listen(3000);
