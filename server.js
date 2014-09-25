@@ -13,6 +13,16 @@ fs.readFile(userFile, 'utf8', function (err, data) {
     }
 
     users = JSON.parse(data);
+
+    // remove the basketball from the user inventory if it was there.
+    for(var i in users){
+        for(var j in users[i].inventory){
+            if(users[i].inventory[j] == "basketball"){
+                users[i].inventory.splice(j, 1);
+                return;
+            }
+        }
+    }
 });
 
 fs.readFile(campusFile, 'utf8', function (err, data) {
@@ -22,6 +32,22 @@ fs.readFile(campusFile, 'utf8', function (err, data) {
     }
 
     campus = JSON.parse(data);
+
+    // check to see if basketball is at a location.
+    for(var i in campus){
+        for(var j in campus[i].what){
+            if(campus[i].what[j] == "basketball"){
+                return;
+            }
+        }
+    }
+
+    // put basketball back at fraser
+    for(var i in campus){
+        if(campus[i].id == "outside-fraser"){
+            campus[i].what.push("basketball");
+        }
+    }
 });
 
 
