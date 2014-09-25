@@ -78,10 +78,11 @@
           for(var i in response.users) {
             div = $("<div></div>");
             button = $("<button/>");
-            button.text("User: " + response.users[i]);
+            button.text("User: " + i);
             div.append(button);
-            $.get("/inventory/" + response.users[i], function (usersItems) {
-             if(usersItems != undefined && usersItems.length != 0){
+            //$.get("/inventory/" + response.users[i], function (usersItems) {
+            var usersItems = response.users[i].inventory; 
+            if(usersItems != undefined && usersItems.length != 0){
              for(var j in usersItems) {
                 button2 = $("<button/>");
                 button2.text("Steal: " + usersItems[j]);
@@ -94,10 +95,11 @@
                         );
                     refresh();
                     });
-                 })(button2, cookieDate, response.users[i], usersItems[j]);
+                 })(button2, cookieDate, response.users[i].userid, usersItems[j]);
                 div.append(button2);
                 }
-                }});
+                }
+             //});
             
             $("#otherUsers").append(div);
           } 

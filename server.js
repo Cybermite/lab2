@@ -121,14 +121,14 @@ var dropbox = function(ix,room, userid) {
 var users = [];
 
 function createUser(userid){
-    users[userid] = { "inventory": ["laptop"], "roomid": "4"};
+    users[userid] = { "userid": userid, "inventory": ["laptop"], "roomid": "4"};
 }
 
 function getOtherUsersAt(roomid, userid) {
     var otherUsers = [];
     for (var i in users) {
         if (users[i].roomid == roomid && i != userid) {
-            otherUsers.push(i);
+            otherUsers.push(users[i]);
         }
     }
     return otherUsers;
