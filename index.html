@@ -11,7 +11,8 @@
   <script>
     $(function() {
       $("#where").html("booting...");
-      where = "strong-hall";
+      //where = "strong-hall";
+      var where;
       var cookieDate;
       
       function getCookie(cookieName){
@@ -36,6 +37,14 @@
               document.cookie = "EECS581=" + cookieDate;
           }
       }
+
+      checkCookie();
+      console.log(cookieDate);
+      $.get("/" + cookieDate, function(response){
+          console.log("hwat");
+          where = "strong-hall";  
+          $("#cookieField").html("what");
+      });
 
       setInterval(function refresh() {
         $.get("/" + where + "/" + cookieDate, function (response) {
@@ -135,7 +144,6 @@
         });
       }, 500);
 
-      checkCookie();
       //refresh();
 
     });

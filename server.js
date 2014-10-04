@@ -63,10 +63,31 @@ function writeToFile(file, data){
     });
 }
 
+
+function saveState(){
+    writeToFile(userFile, users);
+    writeToFile(campusFile, campus);
+}
+
+
 app.get('/', function(req, res){
     res.status(200);
     res.sendFile(__dirname + "/index.html");
- //   readFile();
+});
+
+app.get('/:userid', function(req, res){
+    res.set({'Content-Type': 'application/json'});
+    res.status(200);
+    if(users[req.params.userid] == undefined){
+        console.log('reached');
+        res.send('strong-hall');
+        return;
+    }   
+    else{
+        console.log(campus[users[req.params.userid].roomid].id);
+        res.send(campus[users[req.params.userid].roomid].id);
+        return;
+    }
 });
 
 app.get('/inventory/:userid', function(req, res){
@@ -76,8 +97,6 @@ app.get('/inventory/:userid', function(req, res){
     res.set({'Content-Type': 'application/json'});
     res.status(200);
     res.send(users[req.params.userid].inventory);
-    writeToFile(userFile, users);
-    writeToFile(campusFile, campus);
     return;
 });
 
@@ -122,6 +141,7 @@ app.delete('/:id/:item/:userid', function(req, res){
                 users[req.params.userid].inventory.push(campus[i].what[ix]); // stash
                 res.send(users[req.params.userid].inventory);
                 campus[i].what.splice(ix, 1); // room no longer has this
+                saveState();
                 return;
             }
             res.status(200);
@@ -143,7 +163,10 @@ app.delete('/:id/:item/:fromUserid/:toUserid', function(req, res){
         var itemid = users[req.params.fromUserid].inventory.indexOf(req.params.item);
         users[req.params.fromUserid].inventory.splice(itemid, 1);
         users[req.params.toUserid].inventory.push(req.params.item);
+        saveState();
+        res.status(200);
         res.send([]);
+        return;
     }
 });
 
@@ -152,15 +175,17 @@ app.put('/:id/:item/:userid', function(req, res){
         if (req.params.id == campus[i].id) {
             // Check you have this
             var ix = users[req.params.userid].inventory.indexOf(req.params.item)
-                if (ix >= 0) {
-                    dropbox(ix,campus[i], req.params.userid);
-                    res.set({'Content-Type': 'application/json'});
-                    res.status(200);
-                    res.send([]);
-                } else {
-                    res.status(404);
-                    res.send("you do not have this");
-                }
+            if (ix >= 0) {
+                dropbox(ix,campus[i], req.params.userid);
+                res.set({'Content-Type': 'application/json'});
+                saveState();
+                res.status(200);
+                res.send([]);
+            } 
+            else {
+                res.status(404);
+                res.send("you do not have this");
+            }
             return;
         }
     }
@@ -187,6 +212,7 @@ var users = {};
 
 function createUser(userid){
     users[userid] = { "userid": userid, "inventory": ["laptop"], "roomid": "4"};
+    saveState();
 }
 
 function getOtherUsersAt(roomid, userid) {
