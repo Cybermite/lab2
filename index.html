@@ -7,13 +7,67 @@
   <font size=3><div id="next"></div></font>
   <font size=3><div id="cookieField"></div></font>
   <font size=3><div id="otherUsers"></div></font>
-  <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     $(function() {
-      $("#where").html("booting...");
-      where = "strong-hall";
-      var cookieDate;
+    io = io.connect();
+    $("#where").html("booting...");
+    var me = {};
       
+    $.get("/me", function(res) {
+        me = res;
+        //console.log(me);
+        populateOtherUsers();
+        join_room(me.roomid);
+    }); 
+
+    /*
+    
+    */
+    io.on('myroom', function(data){
+        populateOtherUsers();                
+    });
+    
+    function join_room(room_name){
+        io.emit('join-room', {'room': room_name, 'userid': me.userid});
+    }
+    
+    function populateOtherUsers(){
+        $("#otherUsers").html("");
+        $.get("/otherUsers", function(other_users){
+            for(var i in other_users){
+                div = $("<div></div>");
+                button = $("<button/>");
+                button.text("User: " + i);
+                div.append(button);
+                var userItems = other_users[i].inventory;
+                if(userItems != undefined && userItems.length != 0){
+                    for(var j in userItems) {
+                        button2 = $("<button/>");
+                        button2.text("Steal: " + userItems[j]);
+                        (function(button, myid, otherid, item) {
+                            button.click(function() {
+                            $.ajax("/" + me.roomid + "/" + item + "/" + otherid + "/" + myid,
+                                { success : something
+                                , type : "DELETE"
+                                }
+                            );
+                            });
+                        })(button2, me.userid, other_users[i].userid, userItems[j]);
+                        div.append(button2);
+                    }
+                }
+                $("#otherUsers").append(div);                
+            }
+        })
+    }
+
+    function something(){
+        io.emit('room-change', {'room': me.roomid});
+    }
+      
+      /*
       function getCookie(cookieName){
           var name = cookieName + "=";
           var cookie = document.cookie;
@@ -29,15 +83,16 @@
           cookieDate = getCookie("EECS581");
           if(cookieDate == undefined){
               cookieDate = new Date().getTime();
-              /*
-              var expireDate = new Date().setTime(cookieDate.getTime() +
-                      365*24*60*60*1000);
-              var expires = "expires=" + expireDate.toUTCString();*/
+              //var expireDate = new Date().setTime(cookieDate.getTime() +
+                     // 365*24*60*60*1000);
+              //var expires = "expires=" + expireDate.toUTCString();
               document.cookie = "EECS581=" + cookieDate;
           }
       }
 
       checkCookie();
+      
+      */
       /*
       console.log(cookieDate);
       $.get("/" + cookieDate, function(response){
@@ -46,7 +101,7 @@
           $("#cookieField").html("what");
       });
       */
-
+/*
       setInterval(function refresh() {
         $.get("/" + where + "/" + cookieDate, function (response) {
            var data = response.loc;
@@ -144,6 +199,7 @@
           }
         });
       }, 500);
+      */
 
       //refresh();
 

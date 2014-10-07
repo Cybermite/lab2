@@ -1,5 +1,9 @@
-var express = require('express');
-var app = express();
+express = require('express.io');
+app = express();
+app.http().io();
+cookieParser = require('cookie-parser')
+
+app.use(cookieParser())
 
 var fs = require('fs');
 var userFile = __dirname + '/test.json';
@@ -43,11 +47,7 @@ fs.readFile(campusFile, 'utf8', function (err, data) {
     }
 
     // put basketball back at fraser
-    for(var i in campus){
-        if(campus[i].id == "outside-fraser"){
-            campus[i].what.push("basketball");
-        }
-    }
+    campus["outside-fraser"].what.push("basketball");
 });
 
 
@@ -70,10 +70,88 @@ function saveState(){
 }
 
 
+/*
+SUMMARY: Creates a new user with the userid and the default inventory and roomid.
+*/
+function createUser(userid){
+    users[userid] = { "userid": userid.toString(), "inventory": ["laptop"], "roomid": "strong-hall"};
+    saveState();
+}
+
+
+/*
+SUMMARY: Checks if the request has a userid cookie.
+         It will create a new userid cookie and user within are system if not.
+next: This is the next function/call that the current request matches in this app.
+*/
+function createCookieAndUser(req, res, next){
+    req.userid = req.cookies.userid;    
+    if(req.userid == undefined){
+        //console.log(req.cookies.userid);
+        req.userid = new Date().getTime();    
+    }
+    if(users[req.userid] == undefined){
+        //req.userid = new Date().getTime();
+        res.cookie("userid", req.userid, {maxAge: 1000*60*60*24*365})
+        createUser(req.userid);
+    }
+    next();
+}
+
+
+/*
+SUMMARY: will find other users that are currently at the roomid,
+         which are not the same as the userid passed in.
+roomid: The roomid of the room that needs the users from.
+userid: The userid that needs to be ignored in the list.
+RETURN: Returns a list of other userid's at the roomid.
+*/
+function getOtherUsersAt(roomid, userid) {
+    var otherUsers = [];
+    for (var i in users) {
+        if (users[i].roomid == roomid && i != userid) {
+            otherUsers.push(users[i]);
+        }
+    }
+    return otherUsers;
+}
+
+
+// Any call to the app this function will be called first.
+// This will ensure that the user always has a userid.
+app.use(createCookieAndUser);
+
+
 app.get('/', function(req, res){
     res.status(200);
-    res.sendFile(__dirname + "/index.html");
-});
+    res.sendfile(__dirname + "/index.html");
+})
+
+app.get('/me', function(req, res){
+    //console.log(users);
+    //console.log(req.userid);
+    if(users[req.userid] != undefined){
+        res.status(200);
+        //console.log(users[req.userid]);
+        res.send(users[req.userid]);    
+    }
+    else {
+        res.status(404);
+        res.send('Failed to find the user');    
+    }
+})
+
+app.get('/otherUsers', function(req, res){
+
+    if(users[req.userid] != undefined){
+        res.status(200);
+        res.send(getOtherUsersAt(users[req.userid].roomid, req.userid));
+    }    
+    else {
+        res.status(404);
+        res.send('Failed to find the user');
+    }
+})
 
 /*
 app.get('/:userid', function(req, res){
@@ -104,52 +182,48 @@ app.get('/inventory/:userid', function(req, res){
 
 app.get('/images/:name', function(req, res){
     res.status(200);
-    res.sendFile(__dirname + "/" + req.params.name);
+    res.sendfile(__dirname + "/" + req.params.name);
 });
 
-app.get('/:id/:userid', function(req, res){
+app.get('/:room/:userid', function(req, res){
     var response = {};
-    for (var roomid in campus) {
-        if (req.params.id == campus[roomid].id) {
-            res.set({'Content-Type': 'application/json'});
-            res.status(200);
-            response.loc = campus[roomid];
-            if(users[req.params.userid] == undefined){
-                createUser(req.params.userid);
-            }
-
-            // Update this user's location (room)
-            users[req.params.userid].roomid = roomid;
-            response.users = getOtherUsersAt(roomid, req.params.userid);
-            res.send(response);
-
-            return;
-        }
+    
+    if(campus[req.params.room] != undefined){
+        res.set({'Content-Type': 'application/json'});
+        res.status(200);
+        response.loc = campus[req.params.room];
+        if(users[req.params.userid] == undefined){
+            createUser(req.params.userid);        
+        }    
+        
+        // Update this user's location (room)
+        users[req.params.userid].room = req.params.room;
+        response.users = getOtherUsersAt(req.params.room, req.params.userid);
+        res.send(response);
+        return;
     }
     res.status(404);
     res.send("not found, sorry");
 });
 
-app.delete('/:id/:item/:userid', function(req, res){
-    for (var i in campus) {
-        if (req.params.id == campus[i].id) {
-            res.set({'Content-Type': 'application/json'});
-            var ix = -1;
-            if (campus[i].what != undefined) {
-                ix = campus[i].what.indexOf(req.params.item);
-            }
-            if (ix >= 0) {
-                res.status(200);
-                users[req.params.userid].inventory.push(campus[i].what[ix]); // stash
-                res.send(users[req.params.userid].inventory);
-                campus[i].what.splice(ix, 1); // room no longer has this
-                saveState();
-                return;
-            }
+app.delete('/:room/:item/:userid', function(req, res){  
+    if(campus[req.params.room] != undefined){
+        res.set({'Content-Type': 'application/json'});
+        var ix = -1;
+        if (campus[req.params.room].what != undefined) {
+            ix = campus[req.params.room].what.indexOf(req.params.item);
+        }
+        if (ix >= 0) {
             res.status(200);
-            res.send([]);
+            users[req.params.userid].inventory.push(campus[req.params.room].what[ix]); // stash
+            res.send(users[req.params.userid].inventory);
+            campus[req.params.room].what.splice(ix, 1); // room no longer has this
+            saveState();
             return;
         }
+        res.status(200);
+        res.send([]);
+        return;
     }
     res.status(404);
     res.send("location not found");
@@ -172,24 +246,22 @@ app.delete('/:id/:item/:fromUserid/:toUserid', function(req, res){
     }
 });
 
-app.put('/:id/:item/:userid', function(req, res){
-    for (var i in campus) {
-        if (req.params.id == campus[i].id) {
-            // Check you have this
-            var ix = users[req.params.userid].inventory.indexOf(req.params.item)
-            if (ix >= 0) {
-                dropbox(ix,campus[i], req.params.userid);
-                res.set({'Content-Type': 'application/json'});
-                saveState();
-                res.status(200);
-                res.send([]);
-            } 
-            else {
-                res.status(404);
-                res.send("you do not have this");
-            }
-            return;
+app.put('/:room/:item/:userid', function(req, res){
+    if(campus[req.params.room]){
+        // Check you have this
+        var ix = users[req.params.userid].inventory.indexOf(req.params.item)
+        if (ix >= 0) {
+            dropbox(ix,campus[req.params.room], req.params.userid);
+            res.set({'Content-Type': 'application/json'});
+            saveState();
+            res.status(200);
+            res.send([]);
+        } 
+        else {
+            res.status(404);
+            res.send("you do not have this");
         }
+        return;
     }
     res.status(404);
     res.send("location not found");
@@ -210,76 +282,80 @@ var dropbox = function(ix,room, userid) {
     room.what.push(item);
 }
 
-var users = {};
-
-function createUser(userid){
-    users[userid] = { "userid": userid, "inventory": ["laptop"], "roomid": "4"};
-    saveState();
+function changeUserRoom(userid, room_name){
+    users[userid].roomid = room_name;
 }
 
-function getOtherUsersAt(roomid, userid) {
-    var otherUsers = [];
-    for (var i in users) {
-        if (users[i].roomid == roomid && i != userid) {
-            otherUsers.push(users[i]);
-        }
-    }
-    return otherUsers;
-} 
+/**************
+io events
+**************/
+app.io.route('join-room', function(req){
+    req.io.leave(users[req.data.userid].roomid);
+    app.io.room(users[req.data.userid].roomid).broadcast('user-left', users[req.data.userid]);
+    req.io.join(req.data.room);
+    changeUserRoom(req.data.userid, req.data.room);
+    app.io.room(req.data.room).broadcast('new_user_in_room', users[req.userid]);
+})
 
-var campus = [
-{ "id": "lied-center",
+app.io.route('room-change', function(req){
+    app.io.room(req.data.room).broadcast('myroom', 'Room has changed. You should update.');
+})
+
+var users = {};
+
+var campus = {
+"lied-center": { "id": "lied-center",
     "where": "LiedCenter.jpg",
     "next": {"east": "eaton-hall", "south": "dole-institute"},
     "text": "You are outside the Lied Center."
 },
-{ "id": "dole-institute",
+"dole-institute": { "id": "dole-institute",
     "where": "DoleInstituteofPolitics.jpg",
     "next": {"east": "allen-fieldhouse", "north": "lied-center"},
     "text": "You take in the view of the Dole Institute of Politics. This is the best part of your walk to Nichols Hall."
 },
-{ "id": "eaton-hall",
+"eaton-hall": { "id": "eaton-hall",
     "where": "EatonHall.jpg",
     "next": {"east": "snow-hall", "south": "allen-fieldhouse", "west": "lied-center"},
     "text": "You are outside Eaton Hall. You should recognize here."
 },
-{ "id": "snow-hall",
+"snow-hall": { "id": "snow-hall",
     "where": "SnowHall.jpg",
     "next": {"east": "strong-hall", "south": "ambler-recreation", "west": "eaton-hall"},
     "text": "You are outside Snow Hall. Math class? Waiting for the bus?"
 },
-{ "id": "strong-hall",
+"strong-hall": { "id": "strong-hall",
     "where": "StrongHall.jpg",
     "next": {"east": "outside-fraser", "north": "memorial-stadium", "west": "snow-hall"},
     "what": ["coffee"],
     "text": "You are outside Stong Hall."
 },
-{ "id": "ambler-recreation",
+"ambler-recreation": { "id": "ambler-recreation",
     "where": "AmblerRecreation.jpg",
     "next": {"west": "allen-fieldhouse", "north": "snow-hall"},
     "text": "It's the starting of the semester, and you feel motivated to be at the Gym. Let's see about that in 3 weeks."
 },
-{ "id": "outside-fraser",
+"outside-fraser": { "id": "outside-fraser",
     "where": "OutsideFraserHall.jpg",
     "next": {"west": "strong-hall","north":"spencer-museum"},
     "what": ["basketball"],
     "text": "On your walk to the Kansas Union, you wish you had class outside."
 },
-{ "id": "spencer-museum",
+"spencer-museum": { "id": "spencer-museum",
     "where": "SpencerMuseum.jpg",
     "next": {"south": "outside-fraser","west":"memorial-stadium"},
     "what": ["art"],
     "text": "You are at the Spencer Museum of Art."
 },
-{ "id": "memorial-stadium",
+"memorial-stadium": { "id": "memorial-stadium",
     "where": "MemorialStadium.jpg",
     "next": {"south": "strong-hall","east":"spencer-museum"},
     "what": ["ku flag"],
     "text": "Half the crowd is wearing KU Basketball gear at the football game."
 },
-{ "id": "allen-fieldhouse",
+"allen-fieldhouse": { "id": "allen-fieldhouse",
     "where": "AllenFieldhouse.jpg",
     "next": {"north": "eaton-hall","east": "ambler-recreation","west": "dole-institute"},
     "text": "Rock Chalk! You're at the field house."
 }
-]
+}
