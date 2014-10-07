@@ -58,7 +58,7 @@ function writeToFile(file, data){
         //    console.log(users[i]);
        // }
         //console.log(JSON.stringify(users));
-        stream.write(JSON.stringify(data));
+        stream.write(JSON.stringify(data, null, "\t"));
         stream.end();
     });
 }
