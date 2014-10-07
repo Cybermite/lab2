@@ -19,14 +19,16 @@
         me = res;
         //console.log(me);
         populateOtherUsers();
+        populateMyInventory();
         join_room(me.roomid);
     }); 
 
     /*
-    
+    Event sent from the server that means this room has change, and we should update.
     */
     io.on('myroom', function(data){
-        populateOtherUsers();                
+        populateOtherUsers();  
+        populateMyInventory();              
     });
     
     function join_room(room_name){
@@ -49,7 +51,7 @@
                         (function(button, myid, otherid, item) {
                             button.click(function() {
                             $.ajax("/" + me.roomid + "/" + item + "/" + otherid + "/" + myid,
-                                { success : something
+                                { success : updateRoomEvent
                                 , type : "DELETE"
                                 }
                             );
@@ -62,8 +64,35 @@
             }
         })
     }
+    
+    function populateMyInventory(){
+        $.get("/my-inventory",function (data) {
+            if (data == undefined || data.length == 0) {
+                $("#inventory").html("You are not carrying anything");
+            } 
+            else {
+                $("#inventory").html("You are carrying: ");
+                for(var i in data) {
+                    var item = data[i];
+                    $("#inventory").append(item);
+                    button = $("<button/>");
+                    button.text("Drop " + item);
+                    (function(button,where,item) {
+                        button.click(function() {
+                        $.ajax("/drop/" + item,
+                            { success : populateMyInventory
+                            , type : "PUT"
+                            }
+                        );
+                        });
+                    })(button,where,item);
+                    $("#inventory").append(button);
+                }
+            }
+        });
+    }
 
-    function something(){
+    function updateRoomEvent(){
         io.emit('room-change', {'room': me.roomid});
     }
       

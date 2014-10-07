@@ -170,6 +170,19 @@ app.get('/:userid', function(req, res){
 });
 */
 
+app.get('/my-inventory', function(req, res){
+    if(users[req.userid] != undefined){
+        res.set({'Content-Type': 'application/json'});
+        res.status(200);
+        res.send(users[req.userid].inventory);
+        return;
+    }
+    else{
+        res.status(404);
+        res.send('Failed to find the user.');    
+    }
+})
+
 app.get('/inventory/:userid', function(req, res){
     if(users[req.params.userid] == undefined){
         createUser(req.params.userid);
@@ -246,12 +259,13 @@ app.delete('/:id/:item/:fromUserid/:toUserid', function(req, res){
     }
 });
 
-app.put('/:room/:item/:userid', function(req, res){
-    if(campus[req.params.room]){
+app.put('/drop/:item', function(req, res){
+    var room = users[req.userid].roomid;
+    if(campus[room]){
         // Check you have this
-        var ix = users[req.params.userid].inventory.indexOf(req.params.item)
+        var ix = users[req.userid].inventory.indexOf(req.params.item)
         if (ix >= 0) {
-            dropbox(ix,campus[req.params.room], req.params.userid);
+            dropbox(ix,campus[room], req.userid);
             res.set({'Content-Type': 'application/json'});
             saveState();
             res.status(200);
@@ -265,7 +279,7 @@ app.put('/:room/:item/:userid', function(req, res){
     }
     res.status(404);
     res.send("location not found");
-});
+})
 
 app.listen(3000);
 
