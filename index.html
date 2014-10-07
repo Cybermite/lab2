@@ -11,8 +11,7 @@
   <script>
     $(function() {
       $("#where").html("booting...");
-      //where = "strong-hall";
-      var where;
+      where = "strong-hall";
       var cookieDate;
       
       function getCookie(cookieName){
@@ -39,12 +38,14 @@
       }
 
       checkCookie();
+      /*
       console.log(cookieDate);
       $.get("/" + cookieDate, function(response){
           console.log("hwat");
           where = "strong-hall";  
           $("#cookieField").html("what");
       });
+      */
 
       setInterval(function refresh() {
         $.get("/" + where + "/" + cookieDate, function (response) {

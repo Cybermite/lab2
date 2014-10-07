@@ -75,6 +75,7 @@ app.get('/', function(req, res){
     res.sendFile(__dirname + "/index.html");
 });
 
+/*
 app.get('/:userid', function(req, res){
     res.set({'Content-Type': 'application/json'});
     res.status(200);
@@ -89,6 +90,7 @@ app.get('/:userid', function(req, res){
         return;
     }
 });
+*/
 
 app.get('/inventory/:userid', function(req, res){
     if(users[req.params.userid] == undefined){
