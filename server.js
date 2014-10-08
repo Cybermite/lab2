@@ -189,17 +189,6 @@ app.get('/:room', function(req, res){
         res.send('Failed to find the campus location');
     }
 })
-/*
-app.get('/inventory/:userid', function(req, res){
-    if(users[req.params.userid] == undefined){
-        createUser(req.params.userid);
-    }
-    res.set({'Content-Type': 'application/json'});
-    res.status(200);
-    res.send(users[req.params.userid].inventory);
-    return;
-});
-*/
 
 /*
 SUMMARY: TODO
@@ -208,29 +197,6 @@ app.get('/images/:name', function(req, res){
     res.status(200);
     res.sendfile(__dirname + "/" + req.params.name);
 });
-
-/*
-app.get('/:room/:userid', function(req, res){
-    var response = {};
-    
-    if(campus[req.params.room] != undefined){
-        res.set({'Content-Type': 'application/json'});
-        res.status(200);
-        response.loc = campus[req.params.room];
-        if(users[req.params.userid] == undefined){
-            createUser(req.params.userid);        
-        }    
-        
-        // Update this user's location (room)
-        users[req.params.userid].room = req.params.room;
-        response.users = getOtherUsersAt(req.params.room, req.params.userid);
-        res.send(response);
-        return;
-    }
-    res.status(404);
-    res.send("not found, sorry");
-});
-*/
 
 /*
 SUMMARY: TODO
@@ -257,31 +223,6 @@ app.delete('/:room/:item', function(req, res){
     res.status(404);
     res.send("location not found");
 })
-
-/*
-app.delete('/:room/:item/:userid', function(req, res){  
-    if(campus[req.params.room] != undefined){
-        res.set({'Content-Type': 'application/json'});
-        var ix = -1;
-        if (campus[req.params.room].what != undefined) {
-            ix = campus[req.params.room].what.indexOf(req.params.item);
-        }
-        if (ix >= 0) {
-            res.status(200);
-            users[req.params.userid].inventory.push(campus[req.params.room].what[ix]); // stash
-            res.send(users[req.params.userid].inventory);
-            campus[req.params.room].what.splice(ix, 1); // room no longer has this
-            saveState();
-            return;
-        }
-        res.status(200);
-        res.send([]);
-        return;
-    }
-    res.status(404);
-    res.send("location not found");
-});
-*/
 
 /*
 SUMMARY: TODO
@@ -352,13 +293,15 @@ function changeUserRoom(userid, room_name){
 io events
 **************/
 app.io.route('join-room', function(req){
-    if(req.data.room != users[req.data.userid].roomid){
-        req.io.leave(users[req.data.userid].roomid);
-        app.io.room(users[req.data.userid].roomid).broadcast('myroom', 'Room has change. You should update.');
+    if(users[req.data.userid] != undefined){    
+        if(req.data.room != users[req.data.userid].roomid){
+            req.io.leave(users[req.data.userid].roomid);
+            app.io.room(users[req.data.userid].roomid).broadcast('myroom', 'Room has change. You should update.');
+        }
+        req.io.join(req.data.room);
+        changeUserRoom(req.data.userid, req.data.room);
+        app.io.room(req.data.room).broadcast('myroom', 'Room has changed. You should update.');
     }
-    req.io.join(req.data.room);
-    changeUserRoom(req.data.userid, req.data.room);
-    app.io.room(req.data.room).broadcast('myroom', 'Room has changed. You should update.');
 })
 
 app.io.route('room-change', function(req){
