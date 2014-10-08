@@ -18,9 +18,10 @@
     $.get("/me", function(res) {
         me = res;
         //console.log(me);
+        join_room(me.roomid);
         populateOtherUsers();
         populateMyInventory();
-        join_room(me.roomid);
+        populateCampusLocation();
     }); 
 
     /*
@@ -28,7 +29,8 @@
     */
     io.on('myroom', function(data){
         populateOtherUsers();  
-        populateMyInventory();              
+        populateMyInventory();
+        populateCampusLocation();              
     });
     
     function join_room(room_name){
@@ -80,7 +82,7 @@
                     (function(button,where,item) {
                         button.click(function() {
                         $.ajax("/drop/" + item,
-                            { success : populateMyInventory
+                            { success : updateRoomEvent
                             , type : "PUT"
                             }
                         );
@@ -89,6 +91,35 @@
                     $("#inventory").append(button);
                 }
             }
+        });
+    }
+    
+    function populateCampusLocation(){
+        $.get("/" + me.roomid, function (data) {
+            $("#where").html(data.text);
+            $("#picture").attr("src","images/" + data.where);
+            if (data.what == undefined || data.what.length == 0) {
+                $("#what").html("");
+            } 
+            else {
+                $("#what").html("You can see: ");
+                for(var i in data.what) {
+                    var item = data.what[i];
+                    $("#what").append(item);
+                    button = $("<button/>");
+                    button.text("Take " + item);
+                    (function(button,where,item) {
+                        button.click(function() {
+                            $.ajax("/" + me.roomid + "/" + item,
+                                { success : updateRoomEvent
+                                , type : "DELETE"
+                                }
+                            );
+                        });
+                    })(button,where,item);
+                $("#what").append(button);
+                }
+            }    
         });
     }
 

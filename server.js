@@ -183,6 +183,18 @@ app.get('/my-inventory', function(req, res){
     }
 })
 
+app.get('/:room', function(req, res){
+    if(campus[req.params.room] != undefined){
+        res.set({'Content-Type': 'application/json'});
+        res.status(200);
+        res.send(campus[req.params.room]);
+    }
+    else{
+        res.status(404);
+        res.send('Failed to find the campus location');
+    }
+})
+
 app.get('/inventory/:userid', function(req, res){
     if(users[req.params.userid] == undefined){
         createUser(req.params.userid);
@@ -218,6 +230,29 @@ app.get('/:room/:userid', function(req, res){
     res.status(404);
     res.send("not found, sorry");
 });
+
+app.delete('/:room/:item', function(req, res){
+    if(campus[req.params.room] != undefined){
+        res.set({'Content-Type': 'application/json'});
+        var ix = -1;
+        if (campus[req.params.room].what != undefined) {
+            ix = campus[req.params.room].what.indexOf(req.params.item);
+        }
+        if (ix >= 0) {
+            res.status(200);
+            users[req.userid].inventory.push(campus[req.params.room].what[ix]); // stash
+            res.send(users[req.userid].inventory);
+            campus[req.params.room].what.splice(ix, 1); // room no longer has this
+            saveState();
+            return;
+        }
+        res.status(200);
+        res.send([]);
+        return;
+    }
+    res.status(404);
+    res.send("location not found");
+})
 
 app.delete('/:room/:item/:userid', function(req, res){  
     if(campus[req.params.room] != undefined){
@@ -305,10 +340,10 @@ io events
 **************/
 app.io.route('join-room', function(req){
     req.io.leave(users[req.data.userid].roomid);
-    app.io.room(users[req.data.userid].roomid).broadcast('user-left', users[req.data.userid]);
+    app.io.room(users[req.data.userid].roomid).broadcast('myroom', 'Room has change. You should update.');
     req.io.join(req.data.room);
     changeUserRoom(req.data.userid, req.data.room);
-    app.io.room(req.data.room).broadcast('new_user_in_room', users[req.userid]);
+    app.io.room(req.data.room).broadcast('myroom', 'Room has changed. You should update.');
 })
 
 app.io.route('room-change', function(req){
