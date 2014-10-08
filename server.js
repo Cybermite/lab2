@@ -10,7 +10,7 @@ var userFile = __dirname + '/test.json';
 var campusFile = __dirname + '/campus.json';
 
 //function readFile(){
-fs.readFile(userFile, 'utf8', function (err, data) {
+fs.readFile(userFile, 'utf8', function (err, data) {    
     if (err) {
         console.log('Error: ' + err);
         return;
@@ -36,7 +36,8 @@ fs.readFile(campusFile, 'utf8', function (err, data) {
     }
 
     campus = JSON.parse(data);
-
+    campus["allen-fieldhouse"].text = "Rock Chalk! You're at the field house.";
+    
     // check to see if basketball is at a location.
     for(var i in campus){
         for(var j in campus[i].what){
@@ -126,7 +127,9 @@ app.get('/', function(req, res){
     res.status(200);
     res.sendfile(__dirname + "/index.html");
 })
-
+/*
+SUMMARY: TODO
+*/
 app.get('/me', function(req, res){
     //console.log(users);
     //console.log(req.userid);
@@ -141,6 +144,9 @@ app.get('/me', function(req, res){
     }
 })
 
+/*
+SUMMARY: TODO
+*/
 app.get('/otherUsers', function(req, res){
 
     if(users[req.userid] != undefined){
@@ -154,22 +160,8 @@ app.get('/otherUsers', function(req, res){
 })
 
 /*
-app.get('/:userid', function(req, res){
-    res.set({'Content-Type': 'application/json'});
-    res.status(200);
-    if(users[req.params.userid] == undefined){
-        console.log('reached');
-        res.send('strong-hall');
-        return;
-    }   
-    else{
-        console.log(campus[users[req.params.userid].roomid].id);
-        res.send(campus[users[req.params.userid].roomid].id);
-        return;
-    }
-});
+SUMMARY: TODO
 */
-
 app.get('/my-inventory', function(req, res){
     if(users[req.userid] != undefined){
         res.set({'Content-Type': 'application/json'});
@@ -183,6 +175,9 @@ app.get('/my-inventory', function(req, res){
     }
 })
 
+/*
+SUMMARY: TODO
+*/
 app.get('/:room', function(req, res){
     if(campus[req.params.room] != undefined){
         res.set({'Content-Type': 'application/json'});
@@ -194,7 +189,7 @@ app.get('/:room', function(req, res){
         res.send('Failed to find the campus location');
     }
 })
-
+/*
 app.get('/inventory/:userid', function(req, res){
     if(users[req.params.userid] == undefined){
         createUser(req.params.userid);
@@ -204,12 +199,17 @@ app.get('/inventory/:userid', function(req, res){
     res.send(users[req.params.userid].inventory);
     return;
 });
+*/
 
+/*
+SUMMARY: TODO
+*/
 app.get('/images/:name', function(req, res){
     res.status(200);
     res.sendfile(__dirname + "/" + req.params.name);
 });
 
+/*
 app.get('/:room/:userid', function(req, res){
     var response = {};
     
@@ -230,7 +230,11 @@ app.get('/:room/:userid', function(req, res){
     res.status(404);
     res.send("not found, sorry");
 });
+*/
 
+/*
+SUMMARY: TODO
+*/
 app.delete('/:room/:item', function(req, res){
     if(campus[req.params.room] != undefined){
         res.set({'Content-Type': 'application/json'});
@@ -254,6 +258,7 @@ app.delete('/:room/:item', function(req, res){
     res.send("location not found");
 })
 
+/*
 app.delete('/:room/:item/:userid', function(req, res){  
     if(campus[req.params.room] != undefined){
         res.set({'Content-Type': 'application/json'});
@@ -276,7 +281,11 @@ app.delete('/:room/:item/:userid', function(req, res){
     res.status(404);
     res.send("location not found");
 });
+*/
 
+/*
+SUMMARY: TODO
+*/
 app.delete('/:id/:item/:fromUserid/:toUserid', function(req, res){
     if(users[req.params.fromUserid] == undefined || users[req.params.toUserid] == undefined){
         res.status(404);
@@ -294,6 +303,9 @@ app.delete('/:id/:item/:fromUserid/:toUserid', function(req, res){
     }
 });
 
+/*
+SUMMARY: TODO
+*/
 app.put('/drop/:item', function(req, res){
     var room = users[req.userid].roomid;
     if(campus[room]){
@@ -333,6 +345,7 @@ var dropbox = function(ix,room, userid) {
 
 function changeUserRoom(userid, room_name){
     users[userid].roomid = room_name;
+    saveState();
 }
 
 /**************
