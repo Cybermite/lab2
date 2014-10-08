@@ -28,9 +28,12 @@
     Event sent from the server that means this room has change, and we should update.
     */
     io.on('myroom', function(data){
-        populateOtherUsers();  
-        populateMyInventory();
-        populateCampusLocation();              
+        $.get("/me", function(res){
+            me = res;
+            populateOtherUsers();  
+            populateMyInventory();
+            populateCampusLocation();
+        });              
     });
     
     function join_room(room_name){
@@ -40,11 +43,12 @@
     function populateOtherUsers(){
         $("#otherUsers").html("");
         $.get("/otherUsers", function(other_users){
+            console.log(other_users);
             for(var i in other_users){
                 div = $("<div></div>");
-                button = $("<button/>");
-                button.text("User: " + i);
-                div.append(button);
+                label = $("<label/>");
+                label.text("User: " + i + " ");
+                div.append(label);
                 var userItems = other_users[i].inventory;
                 if(userItems != undefined && userItems.length != 0){
                     for(var j in userItems) {
@@ -119,6 +123,19 @@
                     })(button,where,item);
                 $("#what").append(button);
                 }
+            }
+            
+            $("#next").html("");
+            for(var i in data.next) {
+                button = $("<button/>");
+                button.text("Go " + i);
+                (function(button,dest) {
+                    button.click(function() {
+                        join_room(dest);
+                    });
+                })(button,data.next[i]);
+                    
+                $("#next").append(button);
             }    
         });
     }

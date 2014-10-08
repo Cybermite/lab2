@@ -339,8 +339,10 @@ function changeUserRoom(userid, room_name){
 io events
 **************/
 app.io.route('join-room', function(req){
-    req.io.leave(users[req.data.userid].roomid);
-    app.io.room(users[req.data.userid].roomid).broadcast('myroom', 'Room has change. You should update.');
+    if(req.data.room != users[req.data.userid].roomid){
+        req.io.leave(users[req.data.userid].roomid);
+        app.io.room(users[req.data.userid].roomid).broadcast('myroom', 'Room has change. You should update.');
+    }
     req.io.join(req.data.room);
     changeUserRoom(req.data.userid, req.data.room);
     app.io.room(req.data.room).broadcast('myroom', 'Room has changed. You should update.');
