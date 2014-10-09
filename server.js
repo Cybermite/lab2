@@ -88,11 +88,9 @@ next: This is the next function/call that the current request matches in this ap
 function createCookieAndUser(req, res, next){
     req.userid = req.cookies.userid;    
     if(req.userid == undefined){
-        //console.log(req.cookies.userid);
-        req.userid = new Date().getTime();    
+        req.userid = new Date().getTime() + Object.keys(users).length.toString();    
     }
     if(users[req.userid] == undefined){
-        //req.userid = new Date().getTime();
         res.cookie("userid", req.userid, {maxAge: 1000*60*60*24*365})
         createUser(req.userid);
     }
@@ -131,11 +129,8 @@ app.get('/', function(req, res){
 SUMMARY: TODO
 */
 app.get('/me', function(req, res){
-    //console.log(users);
-    //console.log(req.userid);
     if(users[req.userid] != undefined){
         res.status(200);
-        //console.log(users[req.userid]);
         res.send(users[req.userid]);    
     }
     else {

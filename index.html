@@ -43,7 +43,6 @@
     function populateOtherUsers(){
         $("#otherUsers").html("");
         $.get("/otherUsers", function(other_users){
-            console.log(other_users);
             for(var i in other_users){
                 div = $("<div></div>");
                 label = $("<label/>");
