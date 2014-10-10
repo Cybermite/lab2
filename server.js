@@ -9,7 +9,7 @@ var fs = require('fs');
 var userFile = __dirname + '/test.json';
 var campusFile = __dirname + '/campus.json';
 
-//function readFile(){
+
 fs.readFile(userFile, 'utf8', function (err, data) {    
     if (err) {
         console.log('Error: ' + err);
@@ -28,6 +28,7 @@ fs.readFile(userFile, 'utf8', function (err, data) {
         }
     }
 });
+
 
 fs.readFile(campusFile, 'utf8', function (err, data) {
     if (err) {
@@ -55,16 +56,14 @@ fs.readFile(campusFile, 'utf8', function (err, data) {
 function writeToFile(file, data){
     var stream = fs.createWriteStream(file);
     stream.once('open', function(fd) {
-      //  for(var i in users){
-        //    console.log(users[i]);
-       // }
-        //console.log(JSON.stringify(users));
         stream.write(JSON.stringify(data, null, "\t"));
         stream.end();
     });
 }
 
-
+/*
+ * SUMMARY: Saves the users' information and the campus' information into the files. 
+ */
 function saveState(){
     writeToFile(userFile, users);
     writeToFile(campusFile, campus);
@@ -72,8 +71,8 @@ function saveState(){
 
 
 /*
-SUMMARY: Creates a new user with the userid and the default inventory and roomid.
-*/
+ * SUMMARY: Creates a new user with the userid and the default inventory and roomid.
+ */
 function createUser(userid){
     users[userid] = { "userid": userid.toString(), "inventory": ["laptop"], "roomid": "strong-hall"};
     saveState();
@@ -81,10 +80,10 @@ function createUser(userid){
 
 
 /*
-SUMMARY: Checks if the request has a userid cookie.
-         It will create a new userid cookie and user within are system if not.
-next: This is the next function/call that the current request matches in this app.
-*/
+ * SUMMARY: Checks if the request has a userid cookie.
+ *          It will create a new userid cookie and user within are system if not.
+ * PARA: (next): This is the next function/call that the current request matches in this app.
+ */
 function createCookieAndUser(req, res, next){
     req.userid = req.cookies.userid;    
     if(req.userid == undefined){
@@ -99,12 +98,12 @@ function createCookieAndUser(req, res, next){
 
 
 /*
-SUMMARY: will find other users that are currently at the roomid,
-         which are not the same as the userid passed in.
-roomid: The roomid of the room that needs the users from.
-userid: The userid that needs to be ignored in the list.
-RETURN: Returns a list of other userid's at the roomid.
-*/
+ * SUMMARY: will find other users that are currently at the roomid,
+ *          which are not the same as the userid passed in.
+ * PARA: (roomid): The roomid of the room that needs the users from.
+ * PARA: (userid): The userid that needs to be ignored in the list.
+ * RETURN: Returns a list of other userid's at the roomid.
+ */
 function getOtherUsersAt(roomid, userid) {
     var otherUsers = [];
     for (var i in users) {
@@ -116,8 +115,10 @@ function getOtherUsersAt(roomid, userid) {
 }
 
 
-// Any call to the app this function will be called first.
-// This will ensure that the user always has a userid.
+/*
+ * SUMMARY: Any call to the app this function will be called first.
+ *          This will ensure that the user always has a userid.
+ */
 app.use(createCookieAndUser);
 
 
@@ -125,9 +126,12 @@ app.get('/', function(req, res){
     res.status(200);
     res.sendfile(__dirname + "/index.html");
 })
+
+
 /*
-SUMMARY: TODO
-*/
+ * SUMMARY: Gets the information about the user. 
+ *          Will contain the users' inventory, userid, and location.
+ */
 app.get('/me', function(req, res){
     if(users[req.userid] != undefined){
         res.status(200);
@@ -139,9 +143,10 @@ app.get('/me', function(req, res){
     }
 })
 
+
 /*
-SUMMARY: TODO
-*/
+ * SUMMARY: Gets a list of other users' at the same location as the user that is making the request.
+ */
 app.get('/otherUsers', function(req, res){
 
     if(users[req.userid] != undefined){
@@ -154,9 +159,10 @@ app.get('/otherUsers', function(req, res){
     }
 })
 
+
 /*
-SUMMARY: TODO
-*/
+ * SUMMARY: Gets the users' inventory.
+ */
 app.get('/my-inventory', function(req, res){
     if(users[req.userid] != undefined){
         res.set({'Content-Type': 'application/json'});
@@ -170,9 +176,10 @@ app.get('/my-inventory', function(req, res){
     }
 })
 
+
 /*
-SUMMARY: TODO
-*/
+ * SUMMARY: Gets the room information for the room with id passed in.
+ */
 app.get('/:room', function(req, res){
     if(campus[req.params.room] != undefined){
         res.set({'Content-Type': 'application/json'});
@@ -185,17 +192,21 @@ app.get('/:room', function(req, res){
     }
 })
 
+
 /*
-SUMMARY: TODO
-*/
+ * SUMMARY: Gets the image file for room with name passed in.
+ */
 app.get('/images/:name', function(req, res){
     res.status(200);
     res.sendfile(__dirname + "/" + req.params.name);
 });
 
+
 /*
-SUMMARY: TODO
-*/
+ * SUMMARY: Will take the item from the room and place in in the users' inventory.
+ * PARA: (room): The room id that the item needs to be taken from.
+ * PARA: (item): The item that needs to be taken from the room.
+ */
 app.delete('/:room/:item', function(req, res){
     if(campus[req.params.room] != undefined){
         res.set({'Content-Type': 'application/json'});
@@ -219,9 +230,13 @@ app.delete('/:room/:item', function(req, res){
     res.send("location not found");
 })
 
+
 /*
-SUMMARY: TODO
-*/
+ * SUMMARY: Will take the item from the fromUserid's inventory and place it in toUserid's inventory.
+ * PARA: (item)      : Item that was being taken.
+ * PARA: (fromUserid): The userid of the user that the item was taken from.
+ * PARA: (toUserid)i : The userid of the user that the item is going to.
+ */
 app.delete('/:id/:item/:fromUserid/:toUserid', function(req, res){
     if(users[req.params.fromUserid] == undefined || users[req.params.toUserid] == undefined){
         res.status(404);
@@ -239,9 +254,10 @@ app.delete('/:id/:item/:fromUserid/:toUserid', function(req, res){
     }
 });
 
+
 /*
-SUMMARY: TODO
-*/
+ * SUMMARY: Will drop the item from this users' inventory and place in it this users' location.
+ */
 app.put('/drop/:item', function(req, res){
     var room = users[req.userid].roomid;
     if(campus[room]){
@@ -264,7 +280,9 @@ app.put('/drop/:item', function(req, res){
     res.send("location not found");
 })
 
+
 app.listen(3000);
+
 
 var dropbox = function(ix,room, userid) {
     var item = users[userid].inventory[ix];
@@ -279,32 +297,52 @@ var dropbox = function(ix,room, userid) {
     room.what.push(item);
 }
 
+
+/*
+ * SUMMARY: Will change the roomid of the user with the userid passed in.
+ */
 function changeUserRoom(userid, room_name){
     users[userid].roomid = room_name;
     saveState();
 }
 
-/**************
-io events
-**************/
+
+/******************************************************************************
+ * SUMMARY: io events here are what handle the dynamic changing of the webpage.
+ *****************************************************************************/
+
+/* SUMMARY: 
+ * Will listen for the join-room event from the clients.
+ * Will remove the user from the room their at currently and put the user into the room specified.
+ * Will then broadcast to all users within both rooms that the room has changed and it will force the page to update.
+ */
 app.io.route('join-room', function(req){
     if(users[req.data.userid] != undefined){    
+        
+        // Makes sure to not broadcast to the same room twice.
         if(req.data.room != users[req.data.userid].roomid){
             req.io.leave(users[req.data.userid].roomid);
             app.io.room(users[req.data.userid].roomid).broadcast('myroom', 'Room has change. You should update.');
         }
+
         req.io.join(req.data.room);
         changeUserRoom(req.data.userid, req.data.room);
         app.io.room(req.data.room).broadcast('myroom', 'Room has changed. You should update.');
     }
 })
 
+/* SUMMARY:
+ * Will listen for a room-change event from the clients.
+ * This function will broadcast to all other clients within the room to force it to update the page.
+ */
 app.io.route('room-change', function(req){
     app.io.room(req.data.room).broadcast('myroom', 'Room has changed. You should update.');
 })
 
+// Users in the system.
 var users = {};
 
+// Campus information about each location (room).
 var campus = {
 "lied-center": { "id": "lied-center",
     "where": "LiedCenter.jpg",
